@@ -1,12 +1,17 @@
-LDFLAGS = -luv
+LDFLAGS = -framework Foundation \
+          -framework CoreFoundation \
+          -framework ApplicationServices \
+          -Ldeps/libuv
 
-main: libuv http-parser
-	$(CC) src/main.c -o main.out $(LDFLAGS) deps/libuv/libuv.a deps/http-parser/http_parser.o
+INCLFLAGS = -Ideps/http-parser
 
-libuv:
+main: libuv.a http-parser.o
+	$(CC) -v -o main src/main.c $(INCLFLAGS) deps/libuv/libuv.a deps/http-parser/http_parser.o $(LDFLAGS)
+
+libuv.a:
 	$(MAKE) -C deps/libuv libuv.a
 
-http-parser:
+http-parser.o:
 	$(MAKE) -C deps/http-parser http_parser.o
 
 clean:
