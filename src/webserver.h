@@ -5,9 +5,13 @@
 #include "http_parser.h"
 
 /**
- * HTTP Client requires a TCP socket and a HTTP Parser.
+ * HTTP Client.
+ *
+ * The HTTP Client uses a TCP socket stream, a instance of HTTP Parser and a
+ * usable write request to write our response to the socket stream.
  */
 typedef struct {
+    uv_write_t req;
     uv_stream_t stream;
     http_parser parser;
 } http_client_t;

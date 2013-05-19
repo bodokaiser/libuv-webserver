@@ -1,5 +1,4 @@
 #include "webserver.h"
-#include <unistd.h>
 
 #define RESPONSE \
     "HTTP/1.1 200 OK\r\n" \
@@ -31,9 +30,9 @@ static http_parser* parser;
 static http_parser_settings parser_settings;
 
 int main(int argc, const char** argv) {
-    loop = uv_default_loop();
-
     struct sockaddr_in addr = uv_ip4_addr("127.0.0.1", 3000);
+    
+    loop = uv_default_loop();
 
     uv_tcp_init(loop, &server);
     uv_tcp_bind(&server, addr);
@@ -68,7 +67,6 @@ void connection_cb(uv_stream_t* server, int status) {
 
     if (uv_accept(server, &client->stream) == 0) {
         http_parser_init(&client->parser, HTTP_REQUEST);
-
         uv_read_start(&client->stream, alloc_buffer, read_cb);
     } else {
         uv_close((uv_handle_t*) &client->stream, NULL);
@@ -92,23 +90,23 @@ void read_cb(uv_stream_t* stream, ssize_t nread, uv_buf_t buf) {
 
     if (parsed < nread) {
         fprintf(stderr, "Error on parsing HTTP request: \n");
+        
+        uv_close((uv_handle_t*) stream, NULL);
     }
-
-    write(1, buf.base, nread);
 
     free(buf.base);
 }
 
 void write_cb(uv_write_t* req, int status) {
-    printf("sent response\n");
+    uv_close((uv_handle_t*) req->handle, NULL);
+
+    free(req);
 }
 
 int headers_complete_cb(http_parser* parser) {
-    http_client_t* client = (http_client_t*) parser->data;
-    
-    uv_write_t* req = malloc(sizeof(uv_write_t));
+    http_client_t* client = parser->data;
         
-    uv_write(req, &client->stream, &resp_buf, 1, write_cb);
+    uv_write(&client->req, &client->stream, &resp_buf, 1, write_cb);
 
     return 1;
 }
