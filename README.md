@@ -4,6 +4,14 @@ Simple, readable **joyent/libuv** and **joyent/http-parser** implementation.
 We pipe incoming socket streams through the http-parser and then map its result
 on a readable struct.
 
+## todos
+
+* split code into tcp and http part
+* http part will transform between structs and http-parser output
+* check memory leaks
+* improve code quality
+* build a http response part for easy responses
+
 ## license
 
 Copyright 2013 Bodo Kaiser <i@bodokaiser.io>
