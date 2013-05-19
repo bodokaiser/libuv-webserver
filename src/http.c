@@ -5,19 +5,22 @@
 #include <string.h>
 
 void http_request_apply_settings(http_parser_settings* settings) {
+    settings->on_url = url_cb;
+    
     settings->on_header_field = header_field_cb;
     settings->on_header_value = header_value_cb;
     settings->on_headers_complete = headers_complete_cb;
-    //http_request_settings.on_body = body_cb;
+    
+    settings->on_body = body_cb;
 };
 
 int url_cb(http_parser* parser, const char* chunk, size_t len) {
     http_client_t* client = parser->data;
+    http_request_t* request = &client->request;
+    
+    request->url = malloc(len+1);
 
-    struct http_parser_url* url_s;
-    http_parser_parse_url(chunk, len, 1, url_s);
-
-    //client->request.url = url_s
+    strncpy((char*) request->url, chunk, len);
 
     return 0;
 }
@@ -54,11 +57,22 @@ int header_value_cb(http_parser* parser, const char* chunk, size_t len) {
 
 int headers_complete_cb(http_parser* parser) {
     http_client_t* client = parser->data;
+    http_request_t* request = &client->request;
+
+    const char* method = http_method_str(parser->method);
+
+    request->method = malloc(sizeof(method));
+    strncpy(request->method, method, strlen(method));
 
     return 0;
 }
 
-int body_cb(http_parser* parser) {
+int body_cb(http_parser* parser, const char* chunk, size_t len) {
+    http_client_t* client = parser->data;
+    http_request_t* request = &client->request;
+
+    request->body = malloc(len+1);
+    request->body = chunk;
 
     return 0;
 }

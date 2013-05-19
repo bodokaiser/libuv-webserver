@@ -1,12 +1,8 @@
 # libuv-webserver
 
 Simple, readable **joyent/libuv** and **joyent/http-parser** implementation. 
-Mainly for internal research use.
-
-## status
-
-Currently we have a simple tcp echo server installed. In the next steps we try
-to bind the http-server to it.
+We pipe incoming socket streams through the http-parser and then map its result
+on a readable struct.
 
 ## license
 

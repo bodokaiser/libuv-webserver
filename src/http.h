@@ -20,8 +20,8 @@ typedef struct {
     int version_major;
     int version_minor;
 
-    const char* url;
-    const char* method;
+    char* url;
+    char* method;
     
     http_header_t headers[20];
  

@@ -102,12 +102,19 @@ void write_cb(uv_write_t* req, int status) {
 
 int complete_cb(http_parser* parser) {
     http_client_t* client = parser->data;
-        
+    http_request_t* request = &client->request;
+
+    printf("url: %s\n", request->url);
+    printf("method: %s\n", request->method);
+
     for (int i = 0; i < 5; i++) {
         http_header_t* header = &client->request.headers[i];
         if (header->field)
             printf("Header: %s: %s\n", header->field, header->value);
     }
+
+    printf("body: %s\n", request->body);
+    printf("\r\n");
 
     uv_write(&client->req, &client->stream, &resp_buf, 1, write_cb);
 
