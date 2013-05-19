@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * Bind our parser helpers to the parser settings.
+ */
 void http_request_apply_settings(http_parser_settings* settings) {
     settings->on_url = url_cb;
     
@@ -14,6 +17,9 @@ void http_request_apply_settings(http_parser_settings* settings) {
     settings->on_body = body_cb;
 };
 
+/**
+ * Copies url string to request->url.
+ */
 int url_cb(http_parser* parser, const char* chunk, size_t len) {
     http_client_t* client = parser->data;
     http_request_t* request = &client->request;
@@ -25,8 +31,14 @@ int url_cb(http_parser* parser, const char* chunk, size_t len) {
     return 0;
 }
 
+/**
+ * Header counter.
+ */
 int current_header_index = 0;
 
+/**
+ * Copy the header field name to the current header item.
+ */
 int header_field_cb(http_parser* parser, const char* chunk, size_t len) {
     http_client_t* client = parser->data;
 
@@ -40,6 +52,9 @@ int header_field_cb(http_parser* parser, const char* chunk, size_t len) {
     return 0;
 }
 
+/**
+ * Now copy its assigned value.
+ */
 int header_value_cb(http_parser* parser, const char* chunk, size_t len) {
     http_client_t* client = parser->data;
 
@@ -55,6 +70,9 @@ int header_value_cb(http_parser* parser, const char* chunk, size_t len) {
     return 0;
 }
 
+/**
+ * Extract the method name.
+ */
 int headers_complete_cb(http_parser* parser) {
     http_client_t* client = parser->data;
     http_request_t* request = &client->request;
@@ -67,6 +85,9 @@ int headers_complete_cb(http_parser* parser) {
     return 0;
 }
 
+/**
+ * And copy the body content.
+ */
 int body_cb(http_parser* parser, const char* chunk, size_t len) {
     http_client_t* client = parser->data;
     http_request_t* request = &client->request;
