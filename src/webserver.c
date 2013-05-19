@@ -1,4 +1,5 @@
 #include "webserver.h"
+#include <unistd.h>
 
 #define RESPONSE \
     "HTTP/1.1 200 OK\r\n" \
@@ -19,15 +20,9 @@ static uv_loop_t* loop;
 */
 static uv_tcp_t server;
 
-/**
-* HTTP-Parser.
-*/
-static http_parser* parser;
+http_parser_settings settings;
 
-/**
-* HTTP-Parser settings.
-*/
-static http_parser_settings parser_settings;
+int complete_cb(http_parser* parser);
 
 int main(int argc, const char** argv) {
     struct sockaddr_in addr = uv_ip4_addr("127.0.0.1", 3000);
@@ -40,8 +35,6 @@ int main(int argc, const char** argv) {
     resp_buf.base = RESPONSE;
     resp_buf.len = sizeof(RESPONSE);
 
-    parser_settings.on_headers_complete = headers_complete_cb;
-    
     int r = uv_listen((uv_stream_t*) &server, 128, connection_cb);
 
     if (r) {
@@ -65,6 +58,10 @@ void connection_cb(uv_stream_t* server, int status) {
     client->stream.data = client;
     client->parser.data = client;
 
+    http_request_apply_settings(&settings);
+
+    settings.on_message_complete = complete_cb;
+
     if (uv_accept(server, &client->stream) == 0) {
         http_parser_init(&client->parser, HTTP_REQUEST);
         uv_read_start(&client->stream, alloc_buffer, read_cb);
@@ -85,8 +82,8 @@ void read_cb(uv_stream_t* stream, ssize_t nread, uv_buf_t buf) {
         uv_close((uv_handle_t*) stream, NULL);
     }
 
-    int parsed = http_parser_execute(&client->parser, &parser_settings, 
-            buf.base, nread); 
+    int parsed = http_parser_execute(&client->parser, &settings, 
+            buf.base, nread);
 
     if (parsed < nread) {
         fprintf(stderr, "Error on parsing HTTP request: \n");
@@ -103,12 +100,18 @@ void write_cb(uv_write_t* req, int status) {
     free(req);
 }
 
-int headers_complete_cb(http_parser* parser) {
+int complete_cb(http_parser* parser) {
     http_client_t* client = parser->data;
         
+    for (int i = 0; i < 5; i++) {
+        http_header_t* header = &client->request.headers[i];
+        if (header->field)
+            printf("Header: %s: %s\n", header->field, header->value);
+    }
+
     uv_write(&client->req, &client->stream, &resp_buf, 1, write_cb);
 
-    return 1;
+    return 0;
 }
 
 uv_buf_t alloc_buffer(uv_handle_t* handle, size_t size) {
