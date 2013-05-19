@@ -5,6 +5,14 @@
 #include "http_parser.h"
 
 /**
+ * HTTP Client requires a TCP socket and a HTTP Parser.
+ */
+typedef struct {
+    uv_stream_t stream;
+    http_parser parser;
+} http_client_t;
+
+/**
  * TCP on new connection callback.
  */
 void connection_cb(uv_stream_t* server, int status);
@@ -20,14 +28,9 @@ void read_cb(uv_stream_t* stream, ssize_t nread, uv_buf_t);
 void write_cb(uv_write_t* req, int status);
 
 /**
- * Reads url from http request.
- */
-void url_cb();
-
-/**
  * Readers header field from http request.
  */
-void header_field_cb();
+int headers_complete_cb(http_parser* parser);
 
 /**
  * Allocates a new buffer for reading.
