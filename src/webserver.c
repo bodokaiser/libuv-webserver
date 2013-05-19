@@ -1,17 +1,35 @@
 #include "webserver.h"
 
-uv_loop_t* loop;
+/**
+ * Pointer to libuv event loop.
+ */
+static uv_loop_t* loop;
 
-int main(int argc, const char** argv) {
+/**
+ * libuv TCP server.
+ */
+static uv_tcp_t server;
+
+/**
+ * HTTP-Parser.
+ */
+static http_parser* parser;
+
+/**
+ * HTTP-Parser settings.
+ */
+static http_parser_settings settings;
+
+int
+main(int argc, const char** argv) {
     loop = uv_default_loop();
 
     struct sockaddr_in addr = uv_ip4_addr("127.0.0.1", 3000);
 
-    uv_tcp_t server;
     uv_tcp_init(loop, &server);
     uv_tcp_bind(&server, addr);
     
-    int r = uv_listen((uv_stream_t*) &server, 128, on_connection_cb);
+    int r = uv_listen((uv_stream_t*) &server, 128, connection_cb);
 
     if (r) {
         fprintf(stderr, "Error on tcp listen: %s.\n", 
@@ -21,7 +39,8 @@ int main(int argc, const char** argv) {
     return uv_run(loop, UV_RUN_DEFAULT);
 }
 
-void on_connection_cb(uv_stream_t* server, int status) {
+void
+connection_cb(uv_stream_t* server, int status) {
     uv_stream_t* stream = malloc(sizeof(uv_tcp_t));
 
     if (status == -1) {
@@ -38,7 +57,8 @@ void on_connection_cb(uv_stream_t* server, int status) {
     }
 }
 
-void read_cb(uv_stream_t* stream, ssize_t nread, uv_buf_t buf) {
+void
+read_cb(uv_stream_t* stream, ssize_t nread, uv_buf_t buf) {
     uv_write_t* req = malloc(sizeof(uv_write_t));
 
     if (nread == -1) {
@@ -53,7 +73,8 @@ void read_cb(uv_stream_t* stream, ssize_t nread, uv_buf_t buf) {
     uv_write(req, stream, &buf, 1, write_cb);
 }
 
-void write_cb(uv_write_t* req, int status) {
+void
+write_cb(uv_write_t* req, int status) {
     if (status == -1) {
         fprintf(stderr, "Error on writing: %s.\n", 
                 uv_strerror(uv_last_error(loop)));
@@ -62,6 +83,7 @@ void write_cb(uv_write_t* req, int status) {
     free(req);
 }
 
-uv_buf_t alloc_buffer(uv_handle_t* handle, size_t size) {
+uv_buf_t
+alloc_buffer(uv_handle_t* handle, size_t size) {
     return uv_buf_init((char*) malloc(size), size);
 }
