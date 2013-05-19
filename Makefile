@@ -5,8 +5,10 @@ LDFLAGS = -framework Foundation \
 
 INCLFLAGS = -Ideps/http-parser
 
-main: libuv.a http-parser.o
-	$(CC) -v -o main src/main.c $(INCLFLAGS) deps/libuv/libuv.a deps/http-parser/http_parser.o $(LDFLAGS)
+webserver.o: libuv.a http-parser.o
+	$(CC) -o webserver.o src/webserver.c $(INCLFLAGS) \
+		deps/libuv/libuv.a \
+		deps/http-parser/http_parser.o $(LDFLAGS)
 
 libuv.a:
 	$(MAKE) -C deps/libuv libuv.a
@@ -15,5 +17,6 @@ http-parser.o:
 	$(MAKE) -C deps/http-parser http_parser.o
 
 clean:
+	rm webserver.o
 	rm deps/libuv/libuv.a
 	rm deps/http-parser/http_parser.o
