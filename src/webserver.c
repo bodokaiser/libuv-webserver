@@ -1,5 +1,4 @@
 #include "webserver.h"
-#include <unistd.h>
 
 #define RESPONSE \
     "HTTP/1.1 200 OK\r\n" \
@@ -21,8 +20,6 @@ static uv_loop_t* loop;
 static uv_tcp_t server;
 
 http_parser_settings settings;
-
-int complete_cb(http_parser* parser);
 
 int main(int argc, const char** argv) {
     struct sockaddr_in addr = uv_ip4_addr("127.0.0.1", 3000);
@@ -94,12 +91,6 @@ void read_cb(uv_stream_t* stream, ssize_t nread, uv_buf_t buf) {
     free(buf.base);
 }
 
-void write_cb(uv_write_t* req, int status) {
-    uv_close((uv_handle_t*) req->handle, NULL);
-
-    free(req);
-}
-
 int complete_cb(http_parser* parser) {
     http_client_t* client = parser->data;
     http_request_t* request = &client->request;
@@ -116,7 +107,8 @@ int complete_cb(http_parser* parser) {
     printf("body: %s\n", request->body);
     printf("\r\n");
 
-    uv_write(&client->req, &client->stream, &resp_buf, 1, write_cb);
+    uv_write(&client->req, &client->stream, &resp_buf, 1, NULL);
+    uv_close((uv_handle_t*) &client->stream, NULL);
 
     return 0;
 }
