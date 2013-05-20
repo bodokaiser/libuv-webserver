@@ -228,8 +228,10 @@ int http_message_complete_cb(http_parser* parser) {
     printf("\r\n");
 
     /* lets send our short http hello world response and close the socket */
-    return uv_write(&http_request->req, &http_request->stream, &resp_buf, 1, 
+    uv_write(&http_request->req, &http_request->stream, &resp_buf, 1, 
             tcp_write_cb);
+
+    return 0;
 }
 
 /**
